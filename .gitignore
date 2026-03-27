@@ -1,0 +1,54 @@
+# Python onbellek ve derleme çıktıları
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*.egg
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+build/
+dist/
+site/
+pip-wheel-metadata/
+
+# Sanal ortamlar
+venv/
+.venv/
+env/
+ENV/
+
+# Ortam ve gizli bilgiler
+.env
+.env.*
+!.env.example
+
+# Editör ve işletim sistemi dosyaları
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Log ve çalışma zamanı çıktıları
+*.log
+logs/
+
+# Veritabanı ve yerel veri dosyaları
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Araç çıktıları
+.streamlit/
+coverage.xml

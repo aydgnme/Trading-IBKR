@@ -1,0 +1,153 @@
+// ============================================================
+// EMA Trend Strategy — Pine Script v5
+// strategies/ema_trend.pine
+//
+// Python bot (strategies/trend.py) ile birebir aynı mantık:
+//   BUY:  EMA20 > EMA50 > EMA200 (yukarı trend)
+//         + fiyat EMA20'ye pullback_pct kadar yakın
+//         + fiyat EMA20'nin üzerinde
+//   SELL: EMA20 < EMA50 < EMA200 (aşağı trend)
+//         + fiyat EMA20'ye pullback_pct kadar yakın
+//         + fiyat EMA20'nin altında
+//   SL:   Giriş ± ATR × atr_multiplier
+//   TP:   Giriş ± SL_mesafesi × rr_ratio
+//
+// TradingView Alert JSON (webhook için):
+//   {"symbol": "{{ticker}}", "action": "BUY", "price": {{close}}, "timeframe": "{{interval}}"}
+// ============================================================
+
+//@version=5
+strategy(
+     title            = "EMA Trend + Pullback (ATR SL/TP)",
+     shorttitle        = "EMA Trend",
+     overlay           = true,
+     default_qty_type  = strategy.percent_of_equity,
+     default_qty_value = 2,
+     commission_type   = strategy.commission.percent,
+     commission_value  = 0.1,
+     initial_capital   = 10000
+ )
+
+// ── Parametreler ────────────────────────────────────────────
+ema_fast       = input.int(20,    "EMA Hızlı",          minval=1,   group="EMA Ayarları")
+ema_mid        = input.int(50,    "EMA Orta",            minval=1,   group="EMA Ayarları")
+ema_slow       = input.int(200,   "EMA Yavaş",           minval=1,   group="EMA Ayarları")
+pullback_pct   = input.float(0.5, "Pullback Eşiği (%)", minval=0.01, step=0.05, group="Sinyal Ayarları",
+                              tooltip="Fiyatın EMA20'ye maksimum uzaklığı (%). 0.5 = %0.5")
+atr_period     = input.int(14,    "ATR Periyodu",        minval=1,   group="Risk Ayarları")
+atr_multiplier = input.float(1.5, "ATR Çarpanı (SL)",   minval=0.1, step=0.1, group="Risk Ayarları")
+rr_ratio       = input.float(2.0, "Risk/Ödül Oranı",    minval=0.5, step=0.5, group="Risk Ayarları",
+                              tooltip="TP = SL mesafesi × bu oran")
+show_emas      = input.bool(true, "EMA çizgilerini göster", group="Görsel")
+show_sl_tp     = input.bool(true, "SL/TP çizgilerini göster", group="Görsel")
+
+// ── İndikatörler ────────────────────────────────────────────
+ema20  = ta.ema(close, ema_fast)
+ema50  = ta.ema(close, ema_mid)
+ema200 = ta.ema(close, ema_slow)
+atr    = ta.atr(atr_period)
+
+// ── Trend Koşulları ─────────────────────────────────────────
+uptrend   = ema20 > ema50 and ema50 > ema200
+downtrend = ema20 < ema50 and ema50 < ema200
+
+// ── Pullback Tespiti ────────────────────────────────────────
+distance_pct  = math.abs(close - ema20) / ema20 * 100
+near_ema20    = distance_pct <= pullback_pct
+
+// ── Sinyal Koşulları ────────────────────────────────────────
+buy_signal  = uptrend   and near_ema20 and close > ema20
+sell_signal = downtrend and near_ema20 and close < ema20
+
+// ── SL / TP Hesabı ──────────────────────────────────────────
+sl_distance = atr * atr_multiplier
+tp_distance = sl_distance * rr_ratio
+
+buy_sl  = close - sl_distance
+buy_tp  = close + tp_distance
+sell_sl = close + sl_distance
+sell_tp = close - tp_distance
+
+// ── EMA Çizgileri ───────────────────────────────────────────
+plot(show_emas ? ema20  : na, "EMA 20",  color=color.new(color.blue,   0), linewidth=1)
+plot(show_emas ? ema50  : na, "EMA 50",  color=color.new(color.orange, 0), linewidth=1)
+plot(show_emas ? ema200 : na, "EMA 200", color=color.new(color.red,    0), linewidth=2)
+
+// ── Trend Rengi (arka plan) ─────────────────────────────────
+bgcolor(uptrend   ? color.new(color.green, 92) : na, title="Yukarı Trend Arka Plan")
+bgcolor(downtrend ? color.new(color.red,   92) : na, title="Aşağı Trend Arka Plan")
+
+// ── BUY / SELL Okları ───────────────────────────────────────
+plotshape(
+     buy_signal,
+     title    = "BUY",
+     style    = shape.labelup,
+     location = location.belowbar,
+     color    = color.new(color.green, 0),
+     textcolor= color.white,
+     text     = "BUY",
+     size     = size.normal
+ )
+
+plotshape(
+     sell_signal,
+     title    = "SELL",
+     style    = shape.labeldown,
+     location = location.abovebar,
+     color    = color.new(color.red, 0),
+     textcolor= color.white,
+     text     = "SELL",
+     size     = size.normal
+ )
+
+// ── SL / TP Yatay Çizgileri ─────────────────────────────────
+// BUY sinyalinde
+plot(show_sl_tp and buy_signal  ? buy_sl  : na, "BUY SL",  color=color.new(color.red,   0), style=plot.style_linebr, linewidth=1)
+plot(show_sl_tp and buy_signal  ? buy_tp  : na, "BUY TP",  color=color.new(color.green, 0), style=plot.style_linebr, linewidth=1)
+
+// SELL sinyalinde
+plot(show_sl_tp and sell_signal ? sell_sl : na, "SELL SL", color=color.new(color.red,   0), style=plot.style_linebr, linewidth=1)
+plot(show_sl_tp and sell_signal ? sell_tp : na, "SELL TP", color=color.new(color.green, 0), style=plot.style_linebr, linewidth=1)
+
+// ── Bilgi Etiketi (son mumda) ────────────────────────────────
+if barstate.islast
+    trend_str = uptrend ? "⬆ YUKARI" : downtrend ? "⬇ AŞAĞI" : "↔ YATAY"
+    label.new(
+         bar_index, high,
+         str.format("Trend: {0}\nEMA20: {1}\nEMA50: {2}\nEMA200: {3}\nATR: {4}",
+                     trend_str,
+                     str.tostring(ema20,  "#.####"),
+                     str.tostring(ema50,  "#.####"),
+                     str.tostring(ema200, "#.####"),
+                     str.tostring(atr,    "#.####")),
+         style    = label.style_label_left,
+         color    = color.new(color.gray, 20),
+         textcolor= color.white,
+         size     = size.small
+     )
+
+// ── Strateji Emirleri (Backtest) ─────────────────────────────
+if buy_signal
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Long Exit", "Long",
+                   stop  = buy_sl,
+                   limit = buy_tp)
+
+if sell_signal
+    strategy.entry("Short", strategy.short)
+    strategy.exit("Short Exit", "Short",
+                   stop  = sell_sl,
+                   limit = sell_tp)
+
+// ── TradingView Alert Koşulları ──────────────────────────────
+alertcondition(
+     buy_signal,
+     title  = "EMA Trend BUY",
+     message= '{"symbol": "{{ticker}}", "action": "BUY", "price": {{close}}, "timeframe": "{{interval}}"}'
+ )
+
+alertcondition(
+     sell_signal,
+     title  = "EMA Trend SELL",
+     message= '{"symbol": "{{ticker}}", "action": "SELL", "price": {{close}}, "timeframe": "{{interval}}"}'
+ )

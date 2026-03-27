@@ -1,0 +1,13 @@
+ib_insync==0.9.86
+pandas>=2.2.3
+pandas-ta
+yfinance>=0.2.50
+flask>=3.0.0
+python-dotenv>=1.0.0
+backtrader==1.9.78.123
+streamlit>=1.32.0
+requests>=2.31.0
+plotly>=5.20.0
+sqlalchemy>=2.0.0
+numpy>=2.1.0
+pytz>=2024.1
