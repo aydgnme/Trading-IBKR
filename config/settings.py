@@ -39,7 +39,10 @@ BVB_SYMBOLS = []
 BIST_SYMBOLS = []
 
 # ABD Borsası (SMART routing) — aktif
-US_SYMBOLS = ["AAPL", "MSFT", "TSLA", "NVDA", "SPY", "AMZN", "GOOGL", "META"]
+US_SYMBOLS = [
+    "AAPL", "MSFT", "TSLA", "NVDA", "AMZN", "GOOGL", "META",
+    "AMD", "CRM", "COIN", "PLTR", "BABA", "DIS", "BA", "GS",
+]
 
 # Forex çiftleri — devre dışı, izin çözülene kadar beklemede
 FOREX_PAIRS = []
@@ -54,6 +57,10 @@ EU_EXCHANGE_MAP = {
     "EUNL.DE": "SMART",   # iShares Core MSCI World — Frankfurt (Xetra), EUR
     "SXR8.DE": "SMART",   # iShares Core S&P500 — Frankfurt (Xetra), EUR
     "EXSA.DE": "SMART",   # iShares STOXX Europe 600 — Frankfurt (Xetra), EUR
+    "XMWO.DE": "SMART",   # Xtrackers MSCI World — Frankfurt (Xetra), EUR
+    "XDWD.DE": "SMART",   # Xtrackers MSCI World — Frankfurt (Xetra), EUR
+    "EQQQ.DE": "SMART",   # Invesco EQQQ NASDAQ-100 — Frankfurt (Xetra), EUR
+    "IUSA.DE": "SMART",   # iShares S&P500 — Frankfurt (Xetra), EUR
 }
 EU_SYMBOLS = list(EU_EXCHANGE_MAP.keys())
 
